@@ -14,8 +14,6 @@
 #define WIFI_SSID "YourSSID"
 #define WIFI_PASS "YourPassword"
 #define LANG_SHIP_SERVER_URL "https://iot.lang-ship.com/v1/"
-#define LANG_SHIP_WORKSPACE_ID "YOUR_WORKSPACE_ID"
-#define LANG_SHIP_REGISTRATION_TOKEN "YOUR_REGISTRATION_TOKEN"
 #endif
 
 // en: Keep the SDK instance global so it can also be used from loop() and helper functions.
@@ -61,12 +59,10 @@ void setup()
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
 
-        // en: Initialize the SDK with endpoint and workspace settings.
-        // ja: endpoint と workspace 設定を使って SDK を初期化します。
+        // en: Initialize the SDK with the endpoint setting.
+        // ja: endpoint 設定を使って SDK を初期化します。
         LangShipHubConfig config;
         config.serverUrl = LANG_SHIP_SERVER_URL;
-        config.workspaceId = LANG_SHIP_WORKSPACE_ID;
-        config.registrationToken = LANG_SHIP_REGISTRATION_TOKEN;
 
         // en: HTTPS is used for this example, but certificate verification is disabled.
         // ja: このサンプルでは HTTPS を使いますが、証明書検証は無効化しています。
@@ -94,19 +90,15 @@ void setup()
         }
     }
 
-    // en: Print the basic Lang-ship Hub connection settings.
+    // en: Print the basic Lang-ship Hub connection setting.
     // ja: Lang-ship Hub の基本接続設定を表示します。
     Serial.println("Lang-ship Hub basic configuration");
     Serial.print("server_url: ");
     Serial.println(LANG_SHIP_SERVER_URL);
-    Serial.print("workspace_id: ");
-    Serial.println(LANG_SHIP_WORKSPACE_ID);
-    Serial.print("registration_token: ");
-    Serial.println(LANG_SHIP_REGISTRATION_TOKEN);
 
     // en: This example stops here and prepares for the provisioning example.
     // ja: このサンプルはここで終了し、次の登録サンプルへ進む前提です。
-    Serial.println("Ready for next step: device registration");
+    Serial.println("Ready for next step: device provisioning");
 }
 
 void loop()
