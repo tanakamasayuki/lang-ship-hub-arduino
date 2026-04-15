@@ -1,0 +1,15 @@
+# Arduino secrets
+**/arduino_secrets.h
+
+# Arduino build artifacts
+build/
+dist/
+*.elf
+*.bin
+*.hex
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
