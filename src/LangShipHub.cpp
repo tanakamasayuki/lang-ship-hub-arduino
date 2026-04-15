@@ -27,50 +27,18 @@ bool LangShipHub::ping(LangShipPingResponse &response)
     }
 
     const String url = buildUrl("/api/ping");
-    HTTPClient http;
-    bool beginOk = false;
-
-    if (isHttpsUrl(url))
+    if (!sendGetRequest(url, response))
     {
-#if __has_include(<WiFiClientSecure.h>)
-        WiFiClientSecure client;
-        if (config_.skipTlsVerify)
-        {
-            client.setInsecure();
-        }
-        beginOk = http.begin(client, url);
-#else
-        lastError_ = "https_not_supported";
-        return false;
-#endif
-    }
-    else
-    {
-        WiFiClient client;
-        beginOk = http.begin(client, url);
-    }
-
-    if (!beginOk)
-    {
-        lastError_ = "http_begin_failed";
         return false;
     }
 
-    const int httpCode = http.GET();
-    lastStatusCode_ = httpCode;
-    response.httpStatus = httpCode;
-
-    if (httpCode <= 0)
+    if (response.httpStatus == 301 || response.httpStatus == 302 || response.httpStatus == 307 || response.httpStatus == 308)
     {
-        lastError_ = http.errorToString(httpCode);
-        http.end();
+        lastError_ = "redirect_detected";
         return false;
     }
 
-    response.rawBody = http.getString();
-    http.end();
-
-    if (httpCode < 200 || httpCode >= 300)
+    if (response.httpStatus < 200 || response.httpStatus >= 300)
     {
         lastError_ = "unexpected_status";
         return false;
@@ -91,6 +59,81 @@ bool LangShipHub::ping(LangShipPingResponse &response)
         lastError_ = "ping_response_invalid";
         return false;
     }
+
+    return true;
+}
+
+bool LangShipHub::sendGetRequest(const String &url, LangShipPingResponse &response)
+{
+    if (isHttpsUrl(url))
+    {
+        return sendHttpsGetRequest(url, response);
+    }
+
+    return sendHttpGetRequest(url, response);
+}
+
+bool LangShipHub::sendHttpGetRequest(const String &url, LangShipPingResponse &response)
+{
+    WiFiClient client;
+    HTTPClient http;
+
+    if (!http.begin(client, url))
+    {
+        lastError_ = "http_begin_failed";
+        return false;
+    }
+
+    return handleHttpResponse(http, response);
+}
+
+bool LangShipHub::sendHttpsGetRequest(const String &url, LangShipPingResponse &response)
+{
+#if __has_include(<WiFiClientSecure.h>)
+    WiFiClientSecure client;
+    HTTPClient http;
+
+    if (config_.skipTlsVerify)
+    {
+        client.setInsecure();
+    }
+
+    if (!http.begin(client, url))
+    {
+        lastError_ = "http_begin_failed";
+        return false;
+    }
+
+    return handleHttpResponse(http, response);
+#else
+    (void)url;
+    (void)response;
+    lastError_ = "https_not_supported";
+    return false;
+#endif
+}
+
+bool LangShipHub::handleHttpResponse(HTTPClient &http, LangShipPingResponse &response)
+{
+    const char *headerKeys[] = {"Location"};
+
+    http.collectHeaders(headerKeys, 1);
+    http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
+
+    const int httpCode = http.GET();
+    lastStatusCode_ = httpCode;
+    response.httpStatus = httpCode;
+
+    if (httpCode <= 0)
+    {
+        lastError_ = http.errorToString(httpCode);
+        http.end();
+        return false;
+    }
+
+    response.rawBody = http.getString();
+    response.location = http.header("Location");
+    http.end();
 
     return true;
 }

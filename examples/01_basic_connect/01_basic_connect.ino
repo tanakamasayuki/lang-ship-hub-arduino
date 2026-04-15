@@ -19,6 +19,10 @@
 // en: Keep the SDK instance global so it can also be used from loop() and helper functions.
 // ja: loop() や補助関数からも使えるように SDK インスタンスはグローバルに保持します。
 LangShipHub hub;
+bool wifiConnected = false;
+bool hubConfigured = false;
+unsigned long lastPingMillis = 0;
+const unsigned long PING_INTERVAL_MS = 10000;
 
 void setup()
 {
@@ -54,6 +58,7 @@ void setup()
 
     if (WiFi.status() == WL_CONNECTED)
     {
+        wifiConnected = true;
         Serial.println();
         Serial.println("Wi-Fi connected");
         Serial.print("IP address: ");
@@ -73,21 +78,7 @@ void setup()
         config.skipTlsVerify = true;
 
         hub.begin(config);
-
-        // en: Call the SDK ping function to confirm internet and Lang-ship Hub connectivity.
-        // ja: SDK の ping 関数を呼び出して、インターネットと Lang-ship Hub への疎通を確認します。
-        LangShipPingResponse ping;
-        if (hub.ping(ping))
-        {
-            Serial.print("ping_service: ");
-            Serial.println(ping.service);
-            Serial.print("ping_time: ");
-            Serial.println(ping.time);
-        }
-        else
-        {
-            Serial.println("Ping failed");
-        }
+        hubConfigured = true;
     }
 
     // en: Print the basic Lang-ship Hub connection setting.
@@ -96,12 +87,56 @@ void setup()
     Serial.print("server_url: ");
     Serial.println(LANG_SHIP_SERVER_URL);
 
-    // en: This example stops here and prepares for the provisioning example.
-    // ja: このサンプルはここで終了し、次の登録サンプルへ進む前提です。
-    Serial.println("Ready for next step: device provisioning");
+    if (wifiConnected && hubConfigured)
+    {
+        // en: Ping is executed in loop() at a fixed interval.
+        // ja: ping は loop() で一定間隔ごとに実行します。
+        Serial.println("Ready to start periodic ping");
+    }
+    else
+    {
+        // en: The example stays in basic setup mode if Wi-Fi setup fails.
+        // ja: Wi-Fi 接続に失敗した場合、このサンプルは基本設定段階のままとなります。
+        Serial.println("Waiting for a valid network connection");
+    }
 }
 
 void loop()
 {
-    delay(1000);
+    if (!wifiConnected || !hubConfigured)
+    {
+        delay(1000);
+        return;
+    }
+
+    if (millis() - lastPingMillis < PING_INTERVAL_MS)
+    {
+        delay(100);
+        return;
+    }
+
+    lastPingMillis = millis();
+
+    // en: Call the SDK ping function periodically to confirm internet and server connectivity.
+    // ja: SDK の ping 関数を定期的に呼び出して、インターネットとサーバーへの疎通を確認します。
+    LangShipPingResponse ping;
+    if (hub.ping(ping))
+    {
+        Serial.print("ping_service: ");
+        Serial.println(ping.service);
+        Serial.print("ping_time: ");
+        Serial.println(ping.time);
+    }
+    else
+    {
+        Serial.println("Ping failed");
+        Serial.print("ping_error: ");
+        Serial.println(hub.getLastError());
+        Serial.print("ping_status: ");
+        Serial.println(ping.httpStatus);
+        Serial.print("ping_location: ");
+        Serial.println(ping.location);
+        Serial.println("ping_response:");
+        Serial.println(ping.rawBody);
+    }
 }

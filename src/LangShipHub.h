@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <HTTPClient.h>
 
 struct LangShipHubConfig
 {
@@ -16,6 +17,7 @@ struct LangShipPingResponse
     String service;
     String time;
     String rawBody;
+    String location;
     int httpStatus = 0;
 };
 
@@ -39,4 +41,8 @@ private:
     String buildUrl(const String &path) const;
     bool isHttpsUrl(const String &url) const;
     bool extractJsonString(const String &json, const String &key, String &value) const;
+    bool sendGetRequest(const String &url, LangShipPingResponse &response);
+    bool sendHttpGetRequest(const String &url, LangShipPingResponse &response);
+    bool sendHttpsGetRequest(const String &url, LangShipPingResponse &response);
+    bool handleHttpResponse(HTTPClient &http, LangShipPingResponse &response);
 };
