@@ -1,8 +1,6 @@
 #include <WiFi.h>
 #include <LangShipHub.h>
 
-// en: First target is ESP32.
-// ja: 最初のターゲットは ESP32 です。
 // en: This example only shows basic network connection and endpoint settings.
 // ja: このサンプルではネットワーク接続と endpoint 設定のみを扱います。
 // en: This example uses HTTPS without certificate verification for the first connectivity check.
@@ -15,8 +13,6 @@
 #define WIFI_PASS "YourPassword"
 #endif
 
-// en: Keep the SDK instance global so it can also be used from loop() and helper functions.
-// ja: loop() や補助関数からも使えるように SDK インスタンスはグローバルに保持します。
 LangShipHub hub;
 
 void setup()
@@ -35,7 +31,6 @@ void setup()
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
     Serial.print("Connecting to Wi-Fi");
-
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
@@ -80,23 +75,6 @@ void setup()
 
 void loop()
 {
-    static unsigned long lastPingMillis = 0;
-    const unsigned long PING_INTERVAL_MS = 10000;
-
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        delay(1000);
-        return;
-    }
-
-    if (millis() - lastPingMillis < PING_INTERVAL_MS)
-    {
-        delay(100);
-        return;
-    }
-
-    lastPingMillis = millis();
-
     // en: Call the SDK ping function periodically to confirm internet and server connectivity.
     // ja: SDK の ping 関数を定期的に呼び出して、インターネットとサーバーへの疎通を確認します。
     LangShipPingResponse ping;
@@ -119,4 +97,6 @@ void loop()
         Serial.println("ping_response:");
         Serial.println(ping.rawBody);
     }
+
+    delay(10000);
 }
