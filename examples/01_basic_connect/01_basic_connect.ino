@@ -13,16 +13,11 @@
 #else
 #define WIFI_SSID "YourSSID"
 #define WIFI_PASS "YourPassword"
-#define LANG_SHIP_SERVER_URL "https://iot.lang-ship.com/v1/"
 #endif
 
 // en: Keep the SDK instance global so it can also be used from loop() and helper functions.
 // ja: loop() や補助関数からも使えるように SDK インスタンスはグローバルに保持します。
 LangShipHub hub;
-bool wifiConnected = false;
-bool hubConfigured = false;
-unsigned long lastPingMillis = 0;
-const unsigned long PING_INTERVAL_MS = 10000;
 
 void setup()
 {
@@ -36,8 +31,6 @@ void setup()
 
     // en: Connect to Wi-Fi with the credentials defined in arduino_secrets.h.
     // ja: arduino_secrets.h で定義した認証情報を使って Wi-Fi に接続します。
-    unsigned long start = millis();
-
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
@@ -47,63 +40,50 @@ void setup()
     {
         delay(500);
         Serial.print(".");
-
-        if (millis() - start > 30000)
-        {
-            Serial.println();
-            Serial.println("Wi-Fi connect timeout");
-            break;
-        }
     }
+    Serial.println();
+    Serial.println("Wi-Fi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
 
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        wifiConnected = true;
-        Serial.println();
-        Serial.println("Wi-Fi connected");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
+    // en: Create SDK config from library defaults, then apply optional local overrides.
+    // ja: SDK 設定はライブラリの既定値から作成し、必要ならローカル設定で上書きします。
+    LangShipHubConfig config;
 
-        // en: Initialize the SDK with the endpoint setting.
-        // ja: endpoint 設定を使って SDK を初期化します。
-        LangShipHubConfig config;
-        config.serverUrl = LANG_SHIP_SERVER_URL;
+    // en: HTTPS is used for this example, but certificate verification is disabled.
+    // ja: このサンプルでは HTTPS を使いますが、証明書検証は無効化しています。
+    // en: Use this only for the first connectivity test when you do not have a certificate yet.
+    // ja: まだ証明書を用意していない初回疎通確認でのみ使ってください。
+    // en: Accessing other servers with TLS verification disabled is not secure.
+    // ja: TLS 検証を無効にしたまま他のサーバーへアクセスするのは安全ではありません。
+    config.skipTlsVerify = true;
 
-        // en: HTTPS is used for this example, but certificate verification is disabled.
-        // ja: このサンプルでは HTTPS を使いますが、証明書検証は無効化しています。
-        // en: Use this only for the first connectivity test when you do not have a certificate yet.
-        // ja: まだ証明書を用意していない初回疎通確認でのみ使ってください。
-        // en: Accessing other servers with TLS verification disabled is not secure.
-        // ja: TLS 検証を無効にしたまま他のサーバーへアクセスするのは安全ではありません。
-        config.skipTlsVerify = true;
-
-        hub.begin(config);
-        hubConfigured = true;
-    }
+    hub.begin(config);
 
     // en: Print the basic Lang-ship Hub connection setting.
     // ja: Lang-ship Hub の基本接続設定を表示します。
+    const LangShipHubConfig &currentConfig = hub.getConfig();
     Serial.println("Lang-ship Hub basic configuration");
-    Serial.print("server_url: ");
-    Serial.println(LANG_SHIP_SERVER_URL);
+    Serial.print("server_host: ");
+    Serial.println(currentConfig.serverHost);
+    Serial.print("server_base_path: ");
+    Serial.println(currentConfig.serverBasePath);
+    Serial.print("use_https: ");
+    Serial.println(currentConfig.useHttps ? "true" : "false");
+    Serial.print("skip_tls_verify: ");
+    Serial.println(currentConfig.skipTlsVerify ? "true" : "false");
 
-    if (wifiConnected && hubConfigured)
-    {
-        // en: Ping is executed in loop() at a fixed interval.
-        // ja: ping は loop() で一定間隔ごとに実行します。
-        Serial.println("Ready to start periodic ping");
-    }
-    else
-    {
-        // en: The example stays in basic setup mode if Wi-Fi setup fails.
-        // ja: Wi-Fi 接続に失敗した場合、このサンプルは基本設定段階のままとなります。
-        Serial.println("Waiting for a valid network connection");
-    }
+    // en: Ping is executed in loop() at a fixed interval.
+    // ja: ping は loop() で一定間隔ごとに実行します。
+    Serial.println("Ready to start periodic ping");
 }
 
 void loop()
 {
-    if (!wifiConnected || !hubConfigured)
+    static unsigned long lastPingMillis = 0;
+    const unsigned long PING_INTERVAL_MS = 10000;
+
+    if (WiFi.status() != WL_CONNECTED)
     {
         delay(1000);
         return;

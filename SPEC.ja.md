@@ -84,11 +84,12 @@ device の通常通信はこの組み合わせで行う。
 
 ## 6. Endpoint 設定方針
 
-- SDK は `http://` および `https://` の endpoint を扱えること
+- SDK は `host`、`base path`、`https` 利用有無の組み合わせで endpoint を構成できること
+- SDK は必要に応じて `http://` および `https://` を含む完全な endpoint 文字列も扱えること
 - 既定および推奨の接続先は `https://` とすること
-- `http://` の利用は、利用者が明示的に許可した場合に扱えること
+- `http://` の利用は、利用者が `https` を使わない設定を明示した場合に扱えること
 - SDK は domain だけでなく base path を含む接続先を扱えること
-- SDK は endpoint の末尾 `/` の有無に依存せず接続先を扱えること
+- SDK は base path の末尾 `/` の有無に依存せず接続先を扱えること
 - SDK は本番環境、開発環境、QA 環境など複数 environment の切り替えを行えること
 - API version 切り替えのために、`/v1/` のような path を含む endpoint を扱えること
 - QA 用の別 domain や staging 用の別 endpoint を指定できること
@@ -201,9 +202,9 @@ device は少なくとも以下の状態を持つ。
 
 ### 7.8 疎通確認
 
-- SDK は server_url に対する疎通確認を行えること
-- 疎通確認は `server_url` の scheme に従って実行されること
-- 疎通確認のために HTTP を利用する場合も、明示的な許可設定を前提とすること
+- SDK は設定された接続先に対する疎通確認を行えること
+- 疎通確認は `https` 利用設定または完全な endpoint 文字列の scheme に従って実行されること
+- 疎通確認のために HTTP を利用する場合も、明示的な設定を前提とすること
 - 取得系 API は polling または短時間の long polling を前提とすること
 - device は希望待機時間を指定できるが、実際の待機時間は server 側が決定できること
 - server は応答時に `next_wait_sec` を返し、device は次回接続までの待機時間として利用できること

@@ -20,9 +20,9 @@ bool LangShipHub::ping(LangShipPingResponse &response)
     lastError_ = "";
     lastStatusCode_ = 0;
 
-    if (config_.serverUrl.length() == 0)
+    if (config_.serverHost.length() == 0)
     {
-        lastError_ = "server_url_empty";
+        lastError_ = "server_host_empty";
         return false;
     }
 
@@ -155,7 +155,7 @@ int LangShipHub::getLastStatusCode() const
 
 String LangShipHub::buildUrl(const String &path) const
 {
-    String url = config_.serverUrl;
+    String url = buildBaseUrl();
 
     if (!url.endsWith("/"))
     {
@@ -171,6 +171,25 @@ String LangShipHub::buildUrl(const String &path) const
         url += path;
     }
 
+    return url;
+}
+
+String LangShipHub::buildBaseUrl() const
+{
+    String url = config_.useHttps ? "https://" : "http://";
+    url += config_.serverHost;
+
+    if (config_.serverBasePath.length() == 0)
+    {
+        return url;
+    }
+
+    if (!config_.serverBasePath.startsWith("/"))
+    {
+        url += "/";
+    }
+
+    url += config_.serverBasePath;
     return url;
 }
 

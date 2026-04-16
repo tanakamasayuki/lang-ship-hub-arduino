@@ -9,10 +9,10 @@
 ## 2. 基本方針
 
 - 通信は HTTP/HTTPS の JSON API を基本とする
-- 接続先は scheme、domain、base path を含む `server_url` として設定できる
-- `server_url` は本番環境、開発環境、QA 環境、API version 用 path を含む endpoint を指定できる
-- `server_url` は末尾の `/` の有無に依存せず扱えること
-- `http://` の利用は、利用者が明示的に許可した場合に扱うこと
+- 接続先は `host`、`base path`、`https` 利用有無の組み合わせで設定できる
+- `base path` は本番環境、開発環境、QA 環境、API version 用 path を含めて指定できる
+- `base path` は末尾の `/` の有無に依存せず扱えること
+- `http://` の利用は、利用者が明示的に `https` を使わない設定をした場合に扱うこと
 - device は `workspace_id` を持って接続する
 - device の通常認証は `device_id` と `secret_key` を用いる
 - 自動登録時は `registration_token` を用いる
@@ -112,9 +112,9 @@ HTTP ステータスと JSON の両方で判定できることを前提とする
 
 用途:
 
-- server_url 先の Lang-ship Hub へ到達できるか確認する
+- 設定した接続先の Lang-ship Hub へ到達できるか確認する
 - Wi-Fi 接続後の HTTP/HTTPS 疎通確認に利用する
-- `server_url` の scheme に従って実行する
+- `https` 利用設定に従って実行する
 
 レスポンス例:
 
@@ -165,7 +165,11 @@ SDK 呼び出しイメージ:
 ```cpp
 LangShipHub hub;
 
-hub.begin("https://iot.lang-ship.com/v1/");
+LangShipHubConfig config;
+config.serverHost = "iot.lang-ship.com";
+config.serverBasePath = "/v1/";
+config.useHttps = true;
+hub.begin(config);
 hub.setWorkspaceId("abcd1234");
 hub.setRegistrationToken("reg-token");
 

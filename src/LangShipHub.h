@@ -5,7 +5,9 @@
 
 struct LangShipHubConfig
 {
-    String serverUrl;
+    String serverHost = "iot.lang-ship.com";
+    String serverBasePath = "/v1/";
+    bool useHttps = true;
     String workspaceId;
     String registrationToken;
     bool skipTlsVerify = false;
@@ -39,6 +41,7 @@ private:
     int lastStatusCode_ = 0;
 
     String buildUrl(const String &path) const;
+    String buildBaseUrl() const;
     bool isHttpsUrl(const String &url) const;
     bool extractJsonString(const String &json, const String &key, String &value) const;
     bool sendGetRequest(const String &url, LangShipPingResponse &response);
